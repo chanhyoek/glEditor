@@ -1,3 +1,6 @@
 gledit/
 requirements.txt
 **/test/
+build/
+dist/
+makin_exe.txt

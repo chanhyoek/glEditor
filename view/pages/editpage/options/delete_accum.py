@@ -4,6 +4,7 @@ class DeleteAccumsOption:
     def __init__(self, page):
         self.page = page
         self.remove_accumlated_values = False
+        print(self.remove_accumlated_values)
 
     def build(self):
         self.delete_accum_options = ft.Checkbox(
@@ -15,4 +16,4 @@ class DeleteAccumsOption:
         return self.delete_accum_options
     
     def set_accumulated_values(self, value):
-        self.remove_accumulated_values = value
+        self.remove_accumlated_values = value

@@ -6,7 +6,7 @@ from model.file_generator import FileGenerator
 from ...components.SnackbarNotifier import SnackbarNotifier
 
 class EditView:
-    def __init__(self, page, file_data, data_manipulator, tabs_class=None, options_class=None, speratedf_class=None):
+    def __init__(self, page, file_data, data_manipulator, tabs_class=None, options_class=None):
         self.page = page
         self.file_data = file_data
         self.data_manipulator = data_manipulator
@@ -22,7 +22,8 @@ class EditView:
             select_columns=self.options.select_columns_option,
             sperate_df=self.options.sperate_df_option,
             selected_df = self.options.selected_df_option,
-            delete_accums=self.options.delete_accums_option,
+            # delete_accums=self.options.delete_accums_option,
+            sort_options= self.options.sort_options,
             file_data= self.file_data,
             page = self.page,
             tabs = self.tabs,

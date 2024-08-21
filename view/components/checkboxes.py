@@ -41,7 +41,7 @@ class CheckboxManager:
         labels = [(value, False) for value in unique_values]
         return self.create_checkboxes(labels)
 
-    def update_checkboxes_with_unique_values(self, unique_values, batch_size=10):
+    def update_checkboxes_with_unique_values(self, unique_values, batch_size=12):
         """Updates the container with checkboxes for each unique value, batching them in groups."""
         self.container.controls.clear()
         self.checkboxes.clear()
@@ -53,12 +53,12 @@ class CheckboxManager:
             temp_column_controls.append(checkbox)
             
             if (i + 1) % batch_size == 0:
-                column = ft.Column(controls=temp_column_controls, alignment=ft.MainAxisAlignment.START)
+                column = ft.Row(controls=temp_column_controls, scroll=ft.ScrollMode.AUTO, alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
                 self.container.controls.append(column)
                 temp_column_controls = []
         
         if temp_column_controls:
-            column = ft.Column(controls=temp_column_controls, alignment=ft.MainAxisAlignment.START)
+            column = ft.Row(controls=temp_column_controls, scroll=ft.ScrollMode.AUTO,alignment=ft.MainAxisAlignment.START)
             self.container.controls.append(column)
 
         # 업데이트된 체크박스들을 체크박스 리스트에 저장

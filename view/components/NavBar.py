@@ -38,12 +38,20 @@ class NavBar(ft.UserControl):
     def build(self):
         self.view = ft.Container(
             content=ft.Column([
-                ft.Row([
-                    ft.Text("GL_Editor", size=30, weight="bold")
-                ]),
-                ft.Row([
-                    ft.Text("데이터를 쉽게 편집하세요")
-                ]),
+                ft.Row(
+                    [
+                        ft.Text("XCELATOR", size=30, weight="bold"),
+                        ft.Icon(name=ft.icons.SPEED_SHARP, color = "White", size = 32),
+                    ],
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                    alignment= ft.MainAxisAlignment.CENTER
+                ),
+                ft.Row(
+                    [
+                    ft.Text("Xcelator로 업무를 쉽고 빠르게")
+                    ],
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                    alignment= ft.MainAxisAlignment.CENTER),
                 ft.Container(
                     bgcolor=ft.colors.WHITE54,
                     border_radius=ft.border_radius.all(30),
@@ -58,7 +66,8 @@ class NavBar(ft.UserControl):
                     vertical_alignment=ft.CrossAxisAlignment.END,
                     expand=0  # 이 행의 비율을 작게 설정
                 )
-            ]),
+            ],
+            spacing=20),
             padding=ft.padding.all(15),
             margin=ft.margin.all(10),
             width=250,

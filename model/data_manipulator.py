@@ -4,7 +4,7 @@ from typing import List, Dict
 class DataManipulator:
     def __init__(self):
         self.df = None
-        self.keywords = ["합계", "누계", "월계"]
+        self.keywords = ["합계", "누계", "월계", "일계"]
         self.all_set_data = None
         self.all_header = None
 
@@ -80,7 +80,8 @@ class DataManipulator:
             raise ValueError("Dataframe is not loaded")
     
     def filter_accumulated_values(self, df: pd.DataFrame, keywords: List[str]) -> pd.DataFrame:
-        return df[~df.apply(lambda row: any(keyword in str(cell) for cell in row for keyword in keywords), axis=1)]
+        # 데이터프레임의 각 셀에서 공백을 제거하고 필터링
+        return df[~df.apply(lambda row: any(keyword in str(cell).replace(" ", "") for cell in row for keyword in self.keywords), axis=1)]
 
     def remove_accumulated_values(self) -> pd.DataFrame:
         if self.df is not None:

@@ -8,7 +8,7 @@ class SperateDFOption:
     def __init__(self, page, file_data):
         self.page = page
         self.file_data = file_data
-        self.unique_value_checkboxes = ft.Row(controls=[], visible=False, scroll=ft.ScrollMode.AUTO, width=2000)
+        self.unique_value_checkboxes = ft.Column(controls=[], visible=False, scroll=ft.ScrollMode.AUTO, width=1000)
         self.checkbox_manager = CheckboxManager(page, self.unique_value_checkboxes)
         self.data_manipulator = DataManipulator()
 

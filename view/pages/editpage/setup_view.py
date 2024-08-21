@@ -1,5 +1,6 @@
 import flet as ft
 from model.excel_data_parser import ExcelDataParser
+from ...components.SnackbarNotifier import SnackbarNotifier
 
 class SetupView:
     def __init__(self, page: ft.Page, on_file_uploaded_callback):
@@ -7,6 +8,7 @@ class SetupView:
         self.file_picker = ft.FilePicker(on_result=self.file_picker_result)
         self.page.overlay.append(self.file_picker)
         self.on_file_uploaded_callback = on_file_uploaded_callback
+        self.snackbar_notifier = SnackbarNotifier(page)
         
         # 모달 다이얼로그 생성
         self.modal_dialog = ft.AlertDialog(
@@ -28,8 +30,8 @@ class SetupView:
         header = ft.Container(
             content=ft.Column(
                 controls=[
-                    ft.Text("데이터 가공하기", size=32, weight="bold", color=ft.colors.BLUE),
-                    ft.Text("여러 파일의 데이터를 취합 후 원하는 방식대로 편집합니다.", size=16)
+                    ft.Text("데이터 편집하기", size=32, weight="bold", color=ft.colors.BLUE),
+                    ft.Text("여러 파일, 여러시트의 데이터를 취합하여 원하는 방식대로 편집합니다.", size=16)
                 ],
                 alignment=ft.MainAxisAlignment.START
             ),
@@ -61,7 +63,7 @@ class SetupView:
                 scroll=ft.ScrollMode.AUTO,
                 alignment=ft.MainAxisAlignment.START,
             ),
-            height=250,
+            height=270,
             width=800,
             expand=0
         )    
@@ -78,6 +80,10 @@ class SetupView:
             file_paths = [f.path for f in e.files]
             file_data = await ExcelDataParser().get_multiple_data(file_paths)
             self.on_file_uploaded_callback(file_data)
+        # except Exception as ex:
+        #     # 오류 발생 시 스낵바를 띄우기
+        #     self.modal_dialog.open = False
+        #     self.snackbar_notifier.show_snackbar(f"오류가 발생했습니다: {str(ex)}", error=True)
         finally:
             # 파일 업로드 완료 후 모달 닫기
             self.modal_dialog.open = False

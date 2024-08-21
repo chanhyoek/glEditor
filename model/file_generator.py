@@ -12,17 +12,32 @@ class FileGenerator:
 
     def generate(self, selected_columns, file_data, options):
         try:
-            # 활성화된 탭의 인덱스를 가져옴
             active_tab_index = self.tabs.active_index
             
-            # 활성화된 탭의 인덱스를 기반으로 해당하는 DataFrame을 선택
-            merged_df = self.merge_data(file_data, selected_columns, options['only_selected_df'], active_tab_index)
+            merged_df = self.merge_data(file_data, selected_columns, options['only_selected_df'],active_tab_index)
+            
+            if 'sort_options' in options and options['sort_options']:
+                merged_df = self.sort_dataframe(merged_df, options['sort_options'])
+
+            # if 'remove_accumulated_values' in options and options['remove_accumulated_values'] == True:
+            #     merged_df = self.delete_accum_dataframe(merged_df)
+            
             all_dfs = self.split_data_if_required(merged_df, options['sperate_df_values'], options['unique_value_checkboxes'], options['select_unique_column'])
             self.save_data(all_dfs, options['save_option'])
         except Exception as e:
             raise RuntimeError(f"Error during file generation: {e}")
-
-    def merge_data(self, file_data, selected_columns, only_selected_df, active_tab_index=None):
+        
+    def sort_dataframe(self, df, sort_options):
+        # sort_options는 [(열 이름, 오름차순 여부)] 형태의 리스트
+        sort_columns = [col for col, _ in sort_options]
+        ascending_list = [asc for _, asc in sort_options]
+        return df.sort_values(by=sort_columns, ascending=ascending_list)
+    
+    def delete_accum_dataframe(self, df):
+        print("start")
+        return self.data_manipulator.filter_accumulated_values(df)
+    
+    def merge_data(self, file_data, selected_columns, is_selected_df, active_tab_index=None):
         all_dfs = []
         keys = list(file_data.keys())
         
@@ -34,11 +49,11 @@ class FileGenerator:
                     data[col] = pd.NA
             filtered_df = self.data_manipulator.select_columns(selected_columns)
             filtered_df["원본파일명"] = key
+        
             all_dfs.append(filtered_df)
-
-        # only_selected_df가 True일 때 활성화된 탭의 인덱스에 해당하는 DataFrame을 반환
-        if only_selected_df and active_tab_index is not None:
-            if 0 <= active_tab_index < len(all_dfs):
+        
+        if is_selected_df:
+            if active_tab_index is not None and 0 <= active_tab_index < len(all_dfs):
                 return all_dfs[active_tab_index]
             else:
                 raise IndexError(f"Active tab index {active_tab_index} is out of range.")
@@ -68,12 +83,12 @@ class FileGenerator:
     def save_data(self, all_dfs, save_option):
         output_folder = os.path.join(os.path.expanduser("~"), "Downloads")
         if save_option == "one_file":
-            output_file_path = self._generate_output_path("merged_file", output_folder)
+            output_file_path = self._generate_output_path("편집후파일", output_folder)
             self.parser.create_file_with_multiple_sheets(all_dfs, output_file_path)
         elif save_option == "multi_files":
             self.parser.create_multiple_files(all_dfs, output_folder)
         else:
-            output_file_path = self._generate_output_path("merged_file", output_folder)
+            output_file_path = self._generate_output_path("편집후파일", output_folder)
             self.parser.create_single_file(all_dfs[0], output_file_path)
 
     def _generate_output_path(self, base_name, output_folder, extension=".xlsx"):

@@ -27,7 +27,7 @@ class EditDataPage:
             self.view.controls = self.view.controls[:-1]  # setup_view만 남기고 edit_view를 제거
         
         # 새로운 EditView 생성, DataManipulator 인스턴스를 전달
-        self.edit_view = self.edit_view_class(self.page, file_data, self.data_manipulator, tabs_class=self.tabs_class, speratedf_class=self.speratedf_class)
+        self.edit_view = self.edit_view_class(self.page, file_data, self.data_manipulator, tabs_class=self.tabs_class)
         self.view.controls.append(self.edit_view.build())  # 새로운 edit_view 추가
 
         self.page.update()  # 페이지 업데이트

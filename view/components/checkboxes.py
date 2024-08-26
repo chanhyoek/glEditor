@@ -66,13 +66,15 @@ class CheckboxManager:
         self.container.visible = True
         return self.container
 
-    def select_all_checkboxes(self):
-        """Selects all checkboxes."""
+    def select_all_checkboxes(self, callback=None):
         self._set_all_checkboxes_value(True)
+        if callback:
+            callback(None) 
     
-    def unselect_all_checkboxes(self):
-        """Unselects all checkboxes."""
+    def unselect_all_checkboxes(self, callback=None):
         self._set_all_checkboxes_value(False)
+        if callback:
+            callback(None) 
     
     def _set_all_checkboxes_value(self, value):
         """Sets the value for all checkboxes."""
@@ -104,3 +106,10 @@ class CheckboxManager:
                     control.value = True
             elif isinstance(control, (ft.Row, ft.Column)):
                 self._search_and_select_checkboxes(control, search_term)
+                
+    def get_selected_checkbox_labels_as_text(self):
+        """Returns a list of ft.Text objects with the labels of selected checkboxes."""
+        selected_texts = [
+            ft.Text(f"{ctrl.label} /", size=16, color=ft.colors.LIGHT_BLUE_400) for ctrl in self.checkboxes if ctrl.value
+        ]
+        return selected_texts

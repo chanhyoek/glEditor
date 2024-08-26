@@ -1,6 +1,9 @@
 import flet as ft
 from model.excel_data_parser import ExcelDataParser
 from ...components.SnackbarNotifier import SnackbarNotifier
+from ...components.AlertModal import AlertModal
+import os
+import asyncio
 
 class SetupView:
     def __init__(self, page: ft.Page, on_file_uploaded_callback):
@@ -9,21 +12,22 @@ class SetupView:
         self.page.overlay.append(self.file_picker)
         self.on_file_uploaded_callback = on_file_uploaded_callback
         self.snackbar_notifier = SnackbarNotifier(page)
-        
+        self.operation_cancelled = False
+
         # 모달 다이얼로그 생성
-        self.modal_dialog = ft.AlertDialog(
-            modal=True,
-            content=ft.Column(
-                controls=[
-                    ft.ProgressRing(),  # 에니메이션으로 로딩 표시
-                    ft.Text("파일 첨부 중입니다. 잠시만 기다려주세요...", size=15),
-                ],
-                alignment=ft.MainAxisAlignment.CENTER,
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                height=120,
-                width=300
-            ),
-            actions=[],
+        self.alert_modal = AlertModal(
+            page,
+            content=[
+                ft.ProgressRing(),  # 애니메이션으로 로딩 표시
+                ft.Text("파일 첨부 중입니다. 잠시만 기다려주세요...", size=15),
+            ],
+            actions=[
+                ft.TextButton(
+                    "취소",
+                    on_click=self.cancel_operation
+                )
+            ],
+            on_cancel=self.cancel_operation
         )
     
     def build(self):
@@ -42,7 +46,7 @@ class SetupView:
             content=ft.ElevatedButton(
                 "파일 업로드",
                 icon=ft.icons.UPLOAD_FILE,
-                on_click=lambda _: self.file_picker.pick_files(allow_multiple=True),
+                on_click=lambda _: self.file_picker.pick_files(allow_multiple=True, initial_directory=os.path.expanduser("~/Downloads")),
                 adaptive=True,
                 style=ft.ButtonStyle(
                     color=ft.colors.WHITE,
@@ -70,21 +74,42 @@ class SetupView:
         return self.view
     
     async def file_picker_result(self, e):
+        # 작업이 취소되었는지 초기화
+        self.operation_cancelled = False
+
         # 파일 업로드 모달을 띄우기
-        self.page.dialog = self.modal_dialog
-        self.modal_dialog.open = True
-        self.page.update()
+        self.alert_modal.show()
         
         # 파일 데이터를 읽어옴
         try:
             file_paths = [f.path for f in e.files]
-            file_data = await ExcelDataParser().get_multiple_data(file_paths)
-            self.on_file_uploaded_callback(file_data)
-        # except Exception as ex:
-        #     # 오류 발생 시 스낵바를 띄우기
-        #     self.modal_dialog.open = False
-        #     self.snackbar_notifier.show_snackbar(f"오류가 발생했습니다: {str(ex)}", error=True)
+            print(file_paths)
+
+            # 데이터 처리 중에 취소되었는지 확인
+            file_data = await self.process_files(file_paths)
+
+            if not self.operation_cancelled:
+                self.on_file_uploaded_callback(file_data)
+        except Exception as ex:
+            # 오류 발생 시 스낵바를 띄우기
+            self.snackbar_notifier.show_snackbar(f"오류가 발생했습니다: {str(ex)}", error=True)
         finally:
             # 파일 업로드 완료 후 모달 닫기
-            self.modal_dialog.open = False
-            self.page.update()
+            self.alert_modal.close()
+    
+    async def process_files(self, file_paths):
+        # 파일을 처리하는 동안 주기적으로 작업이 취소되었는지 확인
+        file_data = {}
+        for file_path in file_paths:
+            if self.operation_cancelled:
+                break
+            single_data = await ExcelDataParser().get_single_data(file_path)
+            file_data.update(single_data)
+            await asyncio.sleep(0.1)  # 작업 중간에 취소를 확인할 수 있도록 약간의 지연 추가
+        return file_data
+
+    def cancel_operation(self, e=None):  # e 매개변수 추가
+        # 작업 취소 플래그를 설정
+        self.operation_cancelled = True
+        self.alert_modal.close()
+        self.snackbar_notifier.show_snackbar("작업이 취소되었습니다.", error=True)

@@ -3,7 +3,7 @@ from .options.select_columns import SelectColumnsOption
 from .options.sperate_df import SperateDFOption
 from .options.delete_accum import DeleteAccumsOption
 from .options.only_select_df import OnlySelectedDFOption
-from .options.set_sort_option import SortOptionsContainer  # 새로 추가된 클래스 임포트
+from .options.set_sort_option import SortOptionsContainer
 
 class Options:
     def __init__(self, page, file_data, data_manipulator, select_columns_class=None, speratedf_class=None, delete_accums_class=None, selectd_df_class=None, sort_options_class=None):
@@ -21,18 +21,31 @@ class Options:
         self.sperate_df_option = self.speratedf_class(page, file_data)
         # self.delete_accums_option = self.delete_accums_class(page)
         self.selected_df_option = self.selecteddf_class(page)
-        self.sort_options = self.sort_options_class(page, file_data)  
+        self.sort_options = self.sort_options_class(page, file_data, None)
+        self.select_columns_option.on_selection_change.subscribe(self.sperate_df_option.on_column_selection_changed)
+        self.select_columns_option.on_selection_change.subscribe(self.sort_options.on_column_selection_changed)
+
+
 
     def build(self):
         print("Options")
+        select_columns_container = self.select_columns_option.build()
+        initial_selected_labels = self.select_columns_option.get_selected_labels()
+        
         return ft.Container(
             content=ft.Column(
                 controls=[
-                    self.select_columns_option.build(),
-                    self.sperate_df_option.build(),
-                    self.sort_options.build(),
-                    # self.delete_accums_option.build(),
-                    self.selected_df_option.build(),
+                    select_columns_container,
+                    ft.Container(
+                        content= ft.Column([
+                            ft.Text("선택옵션", size = 18, weight="bold"),
+                            self.sperate_df_option.build(selected_labels = initial_selected_labels),
+                            self.sort_options.build(header= initial_selected_labels),
+                            # self.delete_accums_option.build(),
+                            self.selected_df_option.build()
+                            ]),
+                        margin= ft.margin.only(top=20)
+                    )
                 ],
                 expand=True,
                 spacing=10,
@@ -42,3 +55,4 @@ class Options:
             padding=ft.padding.only(left=20),
             margin=ft.margin.only(bottom=50)
         )
+        

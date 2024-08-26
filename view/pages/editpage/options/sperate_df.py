@@ -1,7 +1,7 @@
 # main.py (또는 EditDataPage에서)
 from model.data_manipulator import DataManipulator
-from .subview.sperate_df_view import SperateDFView
 from ....components.checkboxes import CheckboxManager
+from ....components.SearchField import SearchField
 import flet as ft
 
 class SperateDFOption:
@@ -12,22 +12,33 @@ class SperateDFOption:
         self.checkbox_manager = CheckboxManager(page, self.unique_value_checkboxes)
         self.data_manipulator = DataManipulator()
 
-        self.search_field = ft.TextField(hint_text="Search...", width=600)
+        self.dropdown = ft.Dropdown(
+            width=600,
+            on_change=lambda e: self.update_checkboxes_with_unique_values(e.control.value)
+        )
+
+        # 데이터 준비
         self.all_set_data = None
         self.common_headers = self.data_manipulator.get_common_headers(self.file_data)
         self.all_set_data = self.data_manipulator.concat_dataframes_with_common_headers(list(self.file_data.values()), self.common_headers)
         
         self.isSperate = ft.Checkbox(
-                label="고유값으로 데이터 분리하기: 데이터를 특정열의 고유 값을 기준으로 분리합니다.",
+                label="데이터 필터링: 특정 열의 데이터를 가져와 원하는 값만 선택합니다.",
                 value=False,
                 on_change=lambda e: self.on_checkbox_change(e.control.value)
             )
         
         self.radio_group = None  # 라디오 그룹을 저장할 변수 초기화
-
-    def build(self):
-        print("Sperate_df_option")
         
+                # SearchField 컴포넌트 초기화
+        self.search_component = SearchField(
+            on_search=self.search_unique_value,
+            on_select_all=lambda e: self.checkbox_manager.select_all_checkboxes(),
+            on_unselect_all=lambda e: self.checkbox_manager.unselect_all_checkboxes(),
+            width=400
+        )
+
+    def build(self, selected_labels):
         self.container = ft.Container(
             content=ft.Column(
                 controls=[
@@ -36,6 +47,9 @@ class SperateDFOption:
                 ]
             )
         )
+        
+        self.page.add(self.container)
+        self.update_dropdown(selected_labels)
         
         return self.container 
     
@@ -54,10 +68,10 @@ class SperateDFOption:
         self.content = ft.Container(
             content=ft.Column(
                 controls=[ 
-                    ft.Row([ft.Text("열 선택"), self.create_dropdown_row()]),
-                    self.create_search_unique_value_checkboxes(),
+                    ft.Row([ft.Text("열 선택"), self.dropdown]),
+                    self.search_component.build(),  # SearchField를 사용
                     self.unique_value_checkboxes,
-                    self.select_save_options()  # 저장 옵션을 포함
+                    self.select_save_options()
                 ]
             ),
             visible=False
@@ -65,31 +79,14 @@ class SperateDFOption:
         
         return self.content
     
-    def create_dropdown_row(self):
-        self.dropdown = ft.Dropdown(
-            options=self.generate_options(),
-            width=800,
-            on_change=lambda e: self.update_checkboxes_with_unique_values(e.control.value)
-        )
-        return self.dropdown
-    
-    def generate_options(self):
-        checkboxes = self.checkbox_manager.create_checkboxes_for_columns(self.file_data)
-        selected_checkboxes = (checkbox for checkbox in checkboxes.controls if checkbox.value)
-        options = [ft.dropdown.Option(text=checkbox.label) for checkbox in selected_checkboxes]
-        return options
+    def on_column_selection_changed(self, selected_labels):
+        """열 선택이 변경되었을 때 Dropdown을 업데이트"""
+        self.update_dropdown(selected_labels)
 
-    def create_search_unique_value_checkboxes(self):
-        self.search_unique_value_checkboxes = ft.Row(
-            controls=[
-                self.search_field,
-                ft.CupertinoButton(content=ft.Text("Search"), on_click=lambda e: self.search_unique_value(self.search_field.value)),
-                ft.CupertinoButton(content=ft.Text("전체선택"), on_click=lambda e: self.checkbox_manager.select_all_checkboxes()),
-                ft.CupertinoButton(content=ft.Text("전체해제"), on_click=lambda e: self.checkbox_manager.unselect_all_checkboxes()),
-            ]
-        )
-        
-        return self.search_unique_value_checkboxes
+    def update_dropdown(self, selected_labels):
+        """Dropdown의 옵션을 업데이트"""
+        self.dropdown.options = [ft.dropdown.Option(text=label) for label in selected_labels]
+        self.dropdown.update()  # UI 업데이트
     
     def search_unique_value(self, search_term):
         self.checkbox_manager.search_unique_value(search_term)

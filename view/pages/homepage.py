@@ -63,7 +63,7 @@ class HomePage:
             content=ft.Row(
                 expand=True,
                 controls=[
-                    self.create_card("데이터 편집하기", "데이터를 원하는 형태로 편집하세요", "GO!", "/merge"),
+                    self.create_card("데이터 편집하기", "데이터를 원하는 형태로 편집하세요", "이동하기", "/merge"),
                     # self.create_card("추출하기", "여러 데이터에서 원하는 부분만 편집하여 새로운 파일을 만듭니다", "추출하기", "/extract")
                 ],
                 alignment=ft.MainAxisAlignment.START,

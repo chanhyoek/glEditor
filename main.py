@@ -3,8 +3,9 @@ from view.GL_editor import GLEditor
 
 def main(page: ft.Page):
     print("Main function called")
-    page.title = "GL EDITOR"
+    page.title = "Xcelator"
     page.theme_mode = ft.ThemeMode.DARK  # 다크 테마 적용
+    page.window.icon = ft.icons.SPEED_SHARP
     app = GLEditor(page)
     app.build()
     app.initialize()

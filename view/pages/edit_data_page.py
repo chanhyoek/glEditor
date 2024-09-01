@@ -24,6 +24,7 @@ class EditDataPage:
     def on_file_uploaded(self, file_data):
         # 기존 view의 내용을 초기화 (setup_view는 그대로 유지)
         if self.edit_view:
+            self.edit_view = None
             self.view.controls = self.view.controls[:-1]  # setup_view만 남기고 edit_view를 제거
         
         # 새로운 EditView 생성, DataManipulator 인스턴스를 전달

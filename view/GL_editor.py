@@ -30,7 +30,7 @@ class GLEditor:
         if troute.match("/"):
             self.layout.set_homepage_view()
         elif troute.match("/merge"):
-            self.layout.set_mergepage_view()
+            self.layout.set_editpage_view()
         # elif troute.match("/extract"):
         #     self.layout.set_extractpage_view()
         self.page.update()

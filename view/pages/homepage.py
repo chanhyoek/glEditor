@@ -1,7 +1,7 @@
 import flet as ft
 
 class HomePage:
-    def __init__(self, app_layout, page):
+    def __init__(self, page, app_layout):
         self.page = page
         self.app_layout = app_layout
 

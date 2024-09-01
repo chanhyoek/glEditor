@@ -9,7 +9,10 @@ class SetupView:
     def __init__(self, page: ft.Page, on_file_uploaded_callback):
         self.page = page
         self.file_picker = ft.FilePicker(on_result=self.file_picker_result)
-        self.page.overlay.append(self.file_picker)
+        
+        if self.file_picker not in self.page.overlay:
+            self.page.overlay.append(self.file_picker)
+            
         self.on_file_uploaded_callback = on_file_uploaded_callback
         self.snackbar_notifier = SnackbarNotifier(page)
         self.operation_cancelled = False
@@ -18,7 +21,7 @@ class SetupView:
         self.alert_modal = AlertModal(
             page,
             content=[
-                ft.ProgressRing(),  # 애니메이션으로 로딩 표시
+                ft.ProgressRing(), 
                 ft.Text("파일 첨부 중입니다. 잠시만 기다려주세요...", size=15),
             ],
             actions=[
@@ -35,7 +38,7 @@ class SetupView:
             content=ft.Column(
                 controls=[
                     ft.Text("데이터 편집하기", size=32, weight="bold", color=ft.colors.BLUE),
-                    ft.Text("여러 파일, 여러시트의 데이터를 취합하여 원하는 방식대로 편집합니다.", size=16)
+                    ft.Text("여러 파일, 여러 시트의 데이터를 취합하여 원하는 방식대로 편집합니다.", size=16)
                 ],
                 alignment=ft.MainAxisAlignment.START
             ),
@@ -79,9 +82,13 @@ class SetupView:
 
         # 파일 업로드 모달을 띄우기
         self.alert_modal.show()
-        
-        # 파일 데이터를 읽어옴
+
+        # 파일 처리를 비동기적으로 실행
+        asyncio.create_task(self.process_files_async(e))
+
+    async def process_files_async(self, e):
         try:
+            # 파일 경로 목록 가져오기
             file_paths = [f.path for f in e.files]
             print(file_paths)
 
@@ -96,7 +103,7 @@ class SetupView:
         finally:
             # 파일 업로드 완료 후 모달 닫기
             self.alert_modal.close()
-    
+
     async def process_files(self, file_paths):
         # 파일을 처리하는 동안 주기적으로 작업이 취소되었는지 확인
         file_data = {}

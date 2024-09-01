@@ -35,8 +35,8 @@ class SelectColumnsOption:
         self.update_selected_list_display()
 
         # 체크박스 변경 시 이벤트 핸들러 연결
-        for checkbox in self.checkbox_manager.checkboxes:
-            checkbox.on_change = self.handle_checkbox_change  # 변경
+        self.register_checkbox_event_handlers()
+
 
         # UI 구성
         return ft.Container(
@@ -52,6 +52,11 @@ class SelectColumnsOption:
             )
         )
 
+    def register_checkbox_event_handlers(self) -> None:
+        """체크박스의 이벤트 핸들러를 한 번만 등록합니다."""
+        for checkbox in self.checkbox_manager.checkboxes:
+            checkbox.on_change = self.handle_checkbox_change
+    
     def search_and_update(self, search_term: str) -> None:
         """검색 후 selectedList를 업데이트"""
         self.checkbox_manager.search_unique_value(search_term)
@@ -79,8 +84,7 @@ class SelectColumnsOption:
     def handle_checkbox_change(self, e) -> None:
         """선택된 리스트를 업데이트하고 이벤트를 발행"""
         self.update_selected_list_display()
-        selected_labels = self.get_selected_labels()
-        self.on_selection_change.emit(selected_labels)  # 이벤트 발행
+        self.emit_selection_change()
         
     def emit_selection_change(self) -> None:
         """선택된 열이 변경되었을 때 이벤트를 발생시킴"""

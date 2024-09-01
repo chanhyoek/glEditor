@@ -53,7 +53,7 @@ class ExcuteBtn:
     def set_options(self):
         self.options = {
             'checkboxes': self.select_columns.checkboxes,
-            'unique_value_checkboxes': self.sperate_df.unique_value_checkboxes.controls,
+            'unique_value_checkboxes': self.sperate_df.selected_values.controls,
             'select_unique_column': self.sperate_df.dropdown.value,
             'sperate_df_values': self.sperate_df.isSperate.value,
             'save_option': self.sperate_df.radio_group.value,

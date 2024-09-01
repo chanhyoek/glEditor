@@ -108,8 +108,16 @@ class CheckboxManager:
                 self._search_and_select_checkboxes(control, search_term)
                 
     def get_selected_checkbox_labels_as_text(self):
-        """Returns a list of ft.Text objects with the labels of selected checkboxes."""
-        selected_texts = [
-            ft.Text(f"{ctrl.label} /", size=16, color=ft.colors.LIGHT_BLUE_400) for ctrl in self.checkboxes if ctrl.value
-        ]
+        """Recursively searches all checkboxes and returns a list of ft.Text objects with the labels of selected checkboxes."""
+        selected_texts = self._get_selected_checkboxes_recursive(self.container)
+        return selected_texts
+
+    def _get_selected_checkboxes_recursive(self, container):
+        """Helper method to recursively find all selected checkboxes and return their labels."""
+        selected_texts = []
+        for control in container.controls:
+            if isinstance(control, ft.Checkbox) and control.value:
+                selected_texts.append(ft.Text(f"{control.label} /", size=16, color=ft.colors.LIGHT_BLUE_400))
+            elif isinstance(control, (ft.Row, ft.Column)):
+                selected_texts.extend(self._get_selected_checkboxes_recursive(control))
         return selected_texts

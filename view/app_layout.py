@@ -16,11 +16,11 @@ class AppLayout(ft.Row):
             on_click=self.toggle_nav_rail
         )
         self.sidebar = NavBar(self, page)
-        self.homepage = HomePage(self, page).build()
-        self.editpage = EditDataPage(self.page, self).build()  # page 객체를 전달
+        self.homepage = HomePage(page, self).build()
+        self.editpage = EditDataPage(page, self).build()
 
-        self._active_view = self.homepage
-        self.controls = [self.sidebar, self.toggle_nav_rail_button, self.active_view]
+        self._active_view = None
+        self.controls = [self.sidebar, self.toggle_nav_rail_button]
         self.expand = True
 
     @property
@@ -30,7 +30,9 @@ class AppLayout(ft.Row):
     @active_view.setter
     def active_view(self, view):
         self._active_view = view
-        self.controls[-1] = self._active_view
+        if len(self.controls) > 2:
+            self.controls.pop()
+        self.controls.append(self._active_view)
         self.update()
 
     def toggle_nav_rail(self, e):
@@ -44,14 +46,8 @@ class AppLayout(ft.Row):
         self.sidebar.update()
         self.page.update()
     
-    def set_mergepage_view(self):
+    def set_editpage_view(self):
         self.active_view = self.editpage
         self.sidebar.nav_rail.selected_index = 1
-        self.sidebar.update()
-        self.page.update()
-    
-    def set_extractpage_view(self):
-        self.active_view = self.extractpage
-        self.sidebar.nav_rail.selected_index = 2
         self.sidebar.update()
         self.page.update()

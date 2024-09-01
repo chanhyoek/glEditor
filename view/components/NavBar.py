@@ -83,7 +83,7 @@ class NavBar(ft.UserControl):
             self.app_layout.set_homepage_view()
         elif index == 1:
             self.page.route = "/merge"
-            self.app_layout.set_mergepage_view()
+            self.app_layout.set_editpage_view()
         # elif index == 2:
         #     self.page.route = "/extract"
         #     self.app_layout.set_extractpage_view()

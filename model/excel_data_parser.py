@@ -10,16 +10,24 @@ class ExcelDataParser:
         self.MAX_ROWS_PER_SHEET = 1048576
         self.LARGE_FILE_THRESHOLD = 100 * 1024 * 1024  # 100MB 이상을 큰 파일로 간주
 
-    async def is_large_file(self, file_path: str) -> bool:
-        """파일 크기를 확인하여 큰 파일인지 여부를 반환합니다."""
-        return os.path.getsize(file_path) > self.LARGE_FILE_THRESHOLD
-
+    async def get_single_data(self, file_path: str) -> Dict[str, pd.DataFrame]:
+        """단일 파일을 처리하고 데이터를 반환합니다."""
+        try:
+            return await self.read_file(file_path)
+        except Exception as e:
+            print(f"Error processing {file_path}: {e}")
+            return {}
+    
     async def read_file(self, file_path: str) -> Dict[str, pd.DataFrame]:
         """파일 크기에 따라 적절한 방식으로 파일을 읽습니다."""
         if await self.is_large_file(file_path):
             return await self.read_large_file(file_path)
         else:
             return self.read_small_file(file_path)
+
+    async def is_large_file(self, file_path: str) -> bool:
+        """파일 크기를 확인하여 큰 파일인지 여부를 반환합니다."""
+        return os.path.getsize(file_path) > self.LARGE_FILE_THRESHOLD
 
     async def read_large_file(self, file_path: str) -> Dict[str, pd.DataFrame]:
         """큰 파일을 병렬로 처리합니다."""
@@ -52,15 +60,8 @@ class ExcelDataParser:
         chunks = pd.read_csv(file_path, chunksize=10000)
         return pd.concat(chunks, ignore_index=True)
 
-    async def get_single_data(self, file_path: str) -> Dict[str, pd.DataFrame]:
-        """단일 파일을 처리하고 데이터를 반환합니다."""
-        try:
-            return await self.read_file(file_path)
-        except Exception as e:
-            print(f"Error processing {file_path}: {e}")
-            return {}
-
     def create_single_file(self, df: pd.DataFrame, output_path: str) -> None:
+        """단일 시트로 구성된 하나의 파일을 만듭니다."""
         with pd.ExcelWriter(output_path, engine='xlsxwriter') as writer:
             num_sheets = -(-len(df) // self.MAX_ROWS_PER_SHEET)
             for i in range(num_sheets):
@@ -71,14 +72,15 @@ class ExcelDataParser:
                 split_df.to_excel(writer, sheet_name=sheet_name, index=False)
 
     def create_multiple_files(self, dfs: Dict[str, pd.DataFrame], output_folder: str) -> None:
+        """단일 시트로 구성된 여러개의 파일을 생성합니다."""
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
-
         for file_name, df in dfs.items():
             output_path = os.path.join(output_folder, f"{file_name}.xlsx")
             self.create_single_file(df, output_path)
 
     def create_file_with_multiple_sheets(self, dfs: Dict[str, pd.DataFrame], output_path: str) -> None:
+        """다중시트로 구성된 여러개의 파일을 생성합니다."""      
         with pd.ExcelWriter(output_path, engine='xlsxwriter') as writer:
             for sheet_name, df in dfs.items():
                 num_sheets = -(-len(df) // self.MAX_ROWS_PER_SHEET)
@@ -88,3 +90,15 @@ class ExcelDataParser:
                     split_df = df.iloc[start_row:end_row]
                     split_sheet_name = f"{sheet_name}_{i+1}" if num_sheets > 1 else sheet_name
                     split_df.to_excel(writer, sheet_name=split_sheet_name, index=False)
+
+    def create_file_with_onesheets(self, dfs: Dict[str, pd.DataFrame], output_path: str) -> None:
+        merged_df = pd.concat(dfs.values(), ignore_index=True)
+        with pd.ExcelWriter(output_path, engine='xlsxwriter') as writer:
+            num_sheets = -(-len(merged_df) // self.MAX_ROWS_PER_SHEET)  # 필요한 시트 수 계산 (올림)
+            for i in range(num_sheets):
+                start_row = i * self.MAX_ROWS_PER_SHEET
+                end_row = min((i + 1) * self.MAX_ROWS_PER_SHEET, len(merged_df))
+                split_df = merged_df.iloc[start_row:end_row]
+                sheet_name = f"sheet{i + 1}"
+                split_df.to_excel(writer, sheet_name=sheet_name, index=False)
+

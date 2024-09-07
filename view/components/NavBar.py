@@ -61,7 +61,7 @@ class NavBar(ft.UserControl):
                 ),
                 ft.Row([self.nav_rail], height=300, expand=1),  # 여기서 expand를 1로 설정
                 ft.Row(
-                    controls=[ft.Text("Developed by Tax Core DA | Ver 1.0.0", size=9)],
+                    controls=[ft.Text("Developed by Tax Core DA | Ver 1.1.0", size=9)],
                     alignment=ft.MainAxisAlignment.END,
                     vertical_alignment=ft.CrossAxisAlignment.END,
                     expand=0  # 이 행의 비율을 작게 설정

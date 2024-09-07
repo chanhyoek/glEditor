@@ -4,6 +4,7 @@ from .editpage.edit_view import EditView
 from .editpage.tabs import Tabs
 from .editpage.options.sperate_df import SperateDFOption
 from model.data_manipulator import DataManipulator
+from model.error_handler import ErrorHandler
 
 class EditDataPage:
     def __init__(self, page, app_layout, edit_view_class=None, tabs_class=None, speratedf_class=None):
@@ -21,14 +22,14 @@ class EditDataPage:
         self.view.controls.append(self.setup_view.build())
         return self.view
 
-    def on_file_uploaded(self, file_data):
+    def on_file_uploaded(self, meta_data):
         # 기존 view의 내용을 초기화 (setup_view는 그대로 유지)
         if self.edit_view:
             self.edit_view = None
             self.view.controls = self.view.controls[:-1]  # setup_view만 남기고 edit_view를 제거
         
         # 새로운 EditView 생성, DataManipulator 인스턴스를 전달
-        self.edit_view = self.edit_view_class(self.page, file_data, self.data_manipulator, tabs_class=self.tabs_class)
+        self.edit_view = self.edit_view_class(self.page, meta_data, self.data_manipulator, tabs_class=self.tabs_class)
         self.view.controls.append(self.edit_view.build())  # 새로운 edit_view 추가
 
         self.page.update()  # 페이지 업데이트

@@ -1,5 +1,5 @@
 xcelator/
-requirements.txt
+**/__pycache__
 **/test/
 build/
 dist/

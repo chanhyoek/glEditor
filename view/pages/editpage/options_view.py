@@ -4,12 +4,15 @@ from .options.sperate_df import SperateDFOption
 from .options.delete_accum import DeleteAccumsOption
 from .options.only_select_df import OnlySelectedDFOption
 from .options.set_sort_option import SortOptionsContainer
+from model.error_handler import ErrorHandler
 
 class Options:
-    def __init__(self, page, file_data, data_manipulator, select_columns_class=None, speratedf_class=None, delete_accums_class=None, selectd_df_class=None, sort_options_class=None):
+    def __init__(self, page, meta_data, data_manipulator,window_width,select_columns_class=None, speratedf_class=None, delete_accums_class=None, selectd_df_class=None, sort_options_class=None):
         self.page = page
-        self.file_data = file_data
+        self.meta_data = meta_data
         self.data_manipulator = data_manipulator
+        self.error_handler = ErrorHandler(self.page)
+        self.window_width = window_width
         
         # 의존성 주입 또는 기본값 설정
         self.select_columns_class = select_columns_class or SelectColumnsOption
@@ -18,7 +21,7 @@ class Options:
         self.selecteddf_class = selectd_df_class or OnlySelectedDFOption
         self.sort_options_class = sort_options_class or SortOptionsContainer  
 
-        # 지연 초기화(Lazy Initialization)
+        # 지연 초기화
         self.select_columns_option = None
         self.sperate_df_option = None
         self.selected_df_option = None
@@ -26,21 +29,27 @@ class Options:
 
     def initialize_options(self):
         """옵션 클래스의 인스턴스를 필요할 때 초기화합니다."""
+        
         if not self.select_columns_option:
-            self.select_columns_option = self.select_columns_class(self.page, self.file_data)
+            self.select_columns_option = self.select_columns_class(self.page, self.meta_data, self.error_handler, self.window_width)
         if not self.sperate_df_option:
-            self.sperate_df_option = self.speratedf_class(self.page, self.file_data)
+            self.sperate_df_option = self.speratedf_class(self.page, self.meta_data, self.error_handler, self.window_width)
         if not self.selected_df_option:
             self.selected_df_option = self.selecteddf_class(self.page)
         if not self.sort_options:
-            self.sort_options = self.sort_options_class(self.page, self.file_data, None)
+            self.sort_options = self.sort_options_class(self.page, self.meta_data, None)
+        self.manage_subscriptions()
 
-        # 이벤트 구독 관리
+    def refresh_options(self):
+        """각 옵션의 현재 상태를 새로고침하여 업데이트합니다."""
+        self.select_columns_option = self.select_columns_class(self.page, self.meta_data)
+        self.sperate_df_option = self.speratedf_class(self.page, self.meta_data)
+        self.selected_df_option = self.selecteddf_class(self.page)
+        self.sort_options = self.sort_options_class(self.page, self.meta_data, None)
         self.manage_subscriptions()
 
     def manage_subscriptions(self):
         """옵션 클래스 간 이벤트 구독을 관리합니다."""
-        # 구독을 한 번만 설정하고, 중복 방지
         if self.select_columns_option and self.sperate_df_option:
             self.select_columns_option.on_selection_change.subscribe(self.sperate_df_option.on_column_selection_changed)
         if self.select_columns_option and self.sort_options:
@@ -48,12 +57,10 @@ class Options:
 
     def build(self):
         """UI 빌드를 관리합니다."""
-
-        # 지연 초기화
         self.initialize_options()
 
         select_columns_container = self.select_columns_option.build()
-        initial_selected_labels = self.select_columns_option.get_selected_labels()
+        initial_selected_labels = self.select_columns_option.checkbox_manager.get_selected_checkbox_labels()
         
         return ft.Container(
             content=ft.Column(
@@ -74,6 +81,6 @@ class Options:
                 scroll=ft.ScrollMode.AUTO,
                 alignment=ft.MainAxisAlignment.START,
             ),
-            padding=ft.padding.only(left=20),
-            margin=ft.margin.only(bottom=50)
+            padding=ft.padding.only(left=20, right=50),
+            margin=ft.margin.only(bottom=20)
         )

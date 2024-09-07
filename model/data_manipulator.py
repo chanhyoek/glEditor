@@ -87,11 +87,11 @@ class DataManipulator:
         if self.df is not None:
             return self.filter_accumulated_values(self.df, self.keywords)
         else:
-            raise ValueError("Dataframe is not loaded")
+            raise ValueError("데이터가 로드되지 않았습니다.")
 
     def split_dataframe_by_values(self, column_name: str, values: List[str]) -> Dict[str, pd.DataFrame]:
         if self.df is not None and column_name in self.df.columns:
             split_dfs = {value: self.df[self.df[column_name] == value].reset_index(drop=True) for value in values}
             return split_dfs
         else:
-            raise ValueError("Invalid column name or dataframe is not loaded")
+            raise ValueError("유효하지 않은 열이름이거나, 데이터가 로드되지 않았습니다.")

@@ -2,16 +2,19 @@ import flet as ft
 import asyncio
 
 class Tabs:
-    def __init__(self, page, file_data):
+    def __init__(self, page, meta_data, window_width):
         self.page = page
-        self.file_data = file_data
-        self.tabs_button = ft.Row(scroll=ft.ScrollMode.ALWAYS,width=1000)
+        self.meta_data = meta_data
+        self.tabs_button = ft.Row(scroll=ft.ScrollMode.ALWAYS,width=window_width)
         self.tabs_content = ft.Container()
         self.active_index = 0
+        self.window_width = window_width
+
+        # 창 크기 변경 이벤트 핸들러 등록
+        self.page.on_resize = self.on_resize
 
     def build(self):
-        return ft.Container (
-            content =  ft.Column(
+        self.main_column = ft.Column(
                 controls=[
                     self.tabs_button,
                     self.tabs_content
@@ -19,15 +22,19 @@ class Tabs:
                 expand=True,
                 spacing=5,
                 scroll=ft.ScrollMode.AUTO,
-                width=1000
-            ),
-            padding= ft.padding.only(left=20),
-            margin= ft.margin.only(bottom=50)
+                width=self.window_width
+            )
+        
+        return ft.Container (
+            content =  self.main_column,
+            padding= ft.padding.only(left=20,right=30),
+            margin= ft.margin.only(bottom=20)
         ) 
        
     def create_tabs(self):
-        keys = list(self.file_data.keys())
-        self.tabs_button.controls.clear()  # 불필요한 버튼 추가 방지
+        """tabs 버튼을 생성합니다."""
+        keys = self.meta_data.get_all_keys()
+        self.tabs_button.controls.clear()  
         for index, key in enumerate(keys):
             button = ft.FilledButton(
                 content=ft.Text(key),
@@ -42,26 +49,22 @@ class Tabs:
         self.tabs_button.update()
 
     def switch_tab(self, index):
+        """tab을 전환합니다."""
         self.active_index = index
-        key = list(self.file_data.keys())[index]
-        self.load_data_async(key)
+        keys = self.meta_data.get_all_keys()
+        key = keys[index]
+        self.load_data(key)
     
-    def load_data_async(self, key):
+    def load_data(self, key):
         """데이터를 로드하고 UI를 업데이트합니다."""
-        data = self.load_data(key)  # 데이터 로드
+        data = self.meta_data.get_first_5_rows(key) # 데이터 로드
         self.tabs_content.content = self.create_data_table(data)
         self.update_tab_buttons()
         self.tabs_content.update()
-    
-    def load_data(self, key):
-        """동기적으로 데이터를 로드하는 함수입니다."""
-        # 데이터가 이미 메모리에 로드되어 있으므로 비동기 작업이 필요하지 않습니다.
-        return self.file_data[key]
 
     def update_tab_buttons(self):
         for idx, button in enumerate(self.tabs_button.controls):
             button.style.bgcolor = ft.colors.LIGHT_BLUE_50 if idx == self.active_index else None
-        # self.tabs_button이 이미 페이지에 추가된 이후에만 update를 호출
         if self.tabs_button.page:
             self.tabs_button.update()
     
@@ -77,5 +80,11 @@ class Tabs:
                     )
                 ],
                 expand=True,
-                width=1000,
+                width=self.window_width,
                 scroll=ft.ScrollMode.ALWAYS)
+
+    def on_resize(self, e):
+        """창 크기 변경 시 호출되는 이벤트 핸들러."""
+        self.window_width = self.page.window_width
+        self.main_column.width = self.window_width
+        self.page.update()  # UI 업데이트

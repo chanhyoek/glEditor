@@ -3,9 +3,9 @@ from model.data_manipulator import DataManipulator
 import flet as ft
 
 class SortOptionsContainer:
-    def __init__(self, page, file_data, header):
+    def __init__(self, page, meta_data, header):
         self.page = page
-        self.file_data = file_data
+        self.meta_data = meta_data
         self.data_manipulator = DataManipulator()        
         self.container_list = ft.Column()  # 복사된 컨테이너들을 저장할 Column
         self.header = header

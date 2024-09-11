@@ -7,9 +7,10 @@ from .options.set_sort_option import SortOptionsContainer
 from model.error_handler import ErrorHandler
 
 class Options:
-    def __init__(self, page, meta_data, data_manipulator,window_width,select_columns_class=None, speratedf_class=None, delete_accums_class=None, selectd_df_class=None, sort_options_class=None):
+    def __init__(self, page, columns_controller, unique_values_controller ,data_manipulator, window_width, select_columns_class=None, speratedf_class=None, delete_accums_class=None, selectd_df_class=None, sort_options_class=None):
         self.page = page
-        self.meta_data = meta_data
+        self.columns_controller = columns_controller
+        self.unique_values_controller = unique_values_controller
         self.data_manipulator = data_manipulator
         self.error_handler = ErrorHandler(self.page)
         self.window_width = window_width
@@ -29,48 +30,37 @@ class Options:
 
     def initialize_options(self):
         """옵션 클래스의 인스턴스를 필요할 때 초기화합니다."""
-        
         if not self.select_columns_option:
-            self.select_columns_option = self.select_columns_class(self.page, self.meta_data, self.error_handler, self.window_width)
+            self.select_columns_option = self.select_columns_class(self.page, self.columns_controller, self.error_handler, self.window_width)
         if not self.sperate_df_option:
-            self.sperate_df_option = self.speratedf_class(self.page, self.meta_data, self.error_handler, self.window_width)
+            self.sperate_df_option = self.speratedf_class(self.page, self.columns_controller, self.unique_values_controller, self.error_handler, self.window_width)
         if not self.selected_df_option:
             self.selected_df_option = self.selecteddf_class(self.page)
         if not self.sort_options:
-            self.sort_options = self.sort_options_class(self.page, self.meta_data, None)
-        self.manage_subscriptions()
-
+            self.sort_options = self.sort_options_class(self.page, self.columns_controller)
+        
     def refresh_options(self):
         """각 옵션의 현재 상태를 새로고침하여 업데이트합니다."""
-        self.select_columns_option = self.select_columns_class(self.page, self.meta_data)
-        self.sperate_df_option = self.speratedf_class(self.page, self.meta_data)
+        self.select_columns_option = self.select_columns_class(self.page, self.columns_controller)
+        self.sperate_df_option = self.speratedf_class(self.page, self.columns_controller)
         self.selected_df_option = self.selecteddf_class(self.page)
-        self.sort_options = self.sort_options_class(self.page, self.meta_data, None)
-        self.manage_subscriptions()
-
-    def manage_subscriptions(self):
-        """옵션 클래스 간 이벤트 구독을 관리합니다."""
-        if self.select_columns_option and self.sperate_df_option:
-            self.select_columns_option.on_selection_change.subscribe(self.sperate_df_option.on_column_selection_changed)
-        if self.select_columns_option and self.sort_options:
-            self.select_columns_option.on_selection_change.subscribe(self.sort_options.on_column_selection_changed)
+        self.sort_options = self.sort_options_class(self.page, self.columns_controller)
 
     def build(self):
         """UI 빌드를 관리합니다."""
         self.initialize_options()
 
         select_columns_container = self.select_columns_option.build()
-        initial_selected_labels = self.select_columns_option.checkbox_manager.get_selected_checkbox_labels()
         
         return ft.Container(
             content=ft.Column(
                 controls=[
                     select_columns_container,
                     ft.Container(
-                        content= ft.Column([
+                        content=ft.Column([
                             ft.Text("선택옵션", size=18, weight="bold"),
-                            self.sperate_df_option.build(selected_labels=initial_selected_labels),
-                            self.sort_options.build(header=initial_selected_labels),
+                            self.sperate_df_option.build(),
+                            self.sort_options.build(),
                             self.selected_df_option.build()
                         ]),
                         margin=ft.margin.only(top=20)

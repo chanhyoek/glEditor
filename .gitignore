@@ -4,3 +4,5 @@ xcelator/
 build/
 dist/
 makin_exe.txt
+.pylintrc
+.code_report

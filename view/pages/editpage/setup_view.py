@@ -1,15 +1,22 @@
+# view/setup_view.py
+
 import flet as ft
+from model.meta_data_model import MetadataModel
 from model.excel_data_parser import ExcelDataParser
-from model.meta_data_manager import MetadataManager
+from model.columns_model import Columns
+from model.unique_values_model import UniqueValues
+
+from controller.columns_controller import ColumnsController
+from controller.unique_values_controller import UniqueValuesController
+from controller.setup_controller import SetupController
+from controller.meta_data_controller import MetadataController
 from ...components.SnackbarNotifier import SnackbarNotifier
 from ...components.AlertModal import AlertModal
-from model.task_manager import TaskManager
-from model.task_manager import manage_task
+from services.task_manager import TaskManager
 import os
-import asyncio
 
 class SetupView:
-    def __init__(self, page: ft.Page, on_file_uploaded_callback):
+    def __init__(self, page: ft.Page, task_manager:TaskManager ,on_file_uploaded_callback):
         self.page = page
         self.file_picker = ft.FilePicker(on_result=self.file_picker_result)
 
@@ -18,23 +25,40 @@ class SetupView:
 
         self.on_file_uploaded_callback = on_file_uploaded_callback
         self.snackbar_notifier = SnackbarNotifier(page)
-        self.metadata_manager = MetadataManager()
+        self.metadata_model = MetadataModel()
+        self.columns_model = Columns()
+        self.unique_values_model = UniqueValues()
+
         self.excel_data_parser = ExcelDataParser()
-        self.task_manager = TaskManager()
+        self.task_manager = task_manager
+
+        self.metadata_controller = MetadataController(model=self.metadata_model)
+        self.columns_controller = ColumnsController(columns=self.columns_model)
+        self.unique_values_controller = UniqueValuesController(unique_values=self.unique_values_model)
+
+        self.setup_controller = SetupController(
+            metadata_controller=self.metadata_controller,
+            unique_values_controller= self.unique_values_controller,
+            columns_controller=self.columns_controller,
+            excel_data_parser=self.excel_data_parser,
+            on_file_uploaded_callback=self.on_file_uploaded_callback,
+            task_manager=self.task_manager
+        )
 
 
     def build(self):
+        """UI를 생성합니다."""
         self.upload_btn = ft.ElevatedButton(
-                "파일 업로드",
-                icon=ft.icons.UPLOAD_FILE,
-                on_click=lambda _: self.file_picker.pick_files(allow_multiple=True, initial_directory=os.path.expanduser("~/Downloads")),
-                adaptive=True,
-                style=ft.ButtonStyle(
-                    color=ft.colors.WHITE,
-                    bgcolor=ft.colors.BLUE,
-                    shape=ft.RoundedRectangleBorder(radius=10),
-                )
+            "파일 업로드",
+            icon=ft.icons.UPLOAD_FILE,
+            on_click=lambda _: self.file_picker.pick_files(allow_multiple=True, initial_directory=os.path.expanduser("~/Downloads")),
+            adaptive=True,
+            style=ft.ButtonStyle(
+                color=ft.colors.WHITE,
+                bgcolor=ft.colors.BLUE,
+                shape=ft.RoundedRectangleBorder(radius=10),
             )
+        )
 
         header = ft.Container(
             content=ft.Column(
@@ -42,11 +66,11 @@ class SetupView:
                     ft.Text("데이터 편집하기", size=32, weight="bold", color=ft.colors.BLUE),
                     ft.Text("여러 파일, 여러 시트의 데이터를 취합하여 원하는 방식대로 편집합니다.", size=16),
                     ft.Row(
-                        controls = [
+                        controls=[
                             ft.Text("지원하는 파일양식: csv, xls, xlsx, xlsb"),
                             self.upload_btn
                         ],
-                        spacing = 200
+                        spacing=200
                     )
                 ],
                 alignment=ft.MainAxisAlignment.START
@@ -68,45 +92,32 @@ class SetupView:
             expand=0
         )
         return self.view
-    
+
     def create_modal(self):
-        # 모달 다이얼로그 생성
+        """모달 다이얼로그를 생성합니다."""
         self.alert_modal = AlertModal(
             self.page,
             content_text="파일 첨부 중 입니다. 잠시만 기다려주세요...",
             task_manager=self.task_manager,
-            snackbar_notifier = self.snackbar_notifier
+            snackbar_notifier=self.snackbar_notifier
         )
-
-        # 파일 업로드 모달을 띄우기
         self.alert_modal.show()
 
     async def file_picker_result(self, e):
+        """파일 선택 결과를 처리합니다."""
+        self.create_modal()  # 파일 업로드 모달을 표시
 
-        self.create_modal()
+        # 파일 경로 목록 생성
+        file_paths = [f.path for f in e.files]
 
         # 파일 처리를 비동기적으로 실행
-        asyncio.create_task(self.process_files_async(e))
-    @manage_task(lambda self: self.task_manager)
-    async def process_files_async(self, e):
-        """파일을 비동기적으로 가져와 메타데이터를 반환합니다."""
         try:
-            #메타데이터 리셋
-            self.metadata_manager.reset_metadata()
-
-            #파일 경로별로 데이터를 가져오고 메타데이터로 만들기
-            file_paths = [f.path for f in e.files]
-            for file_path in file_paths:
-                file_data = await self.excel_data_parser.get_single_data(file_path)
-                self.metadata_manager.generate_metadata(file_path, file_data)
-                await asyncio.sleep(0.1)  
-
-            # 파일 업로드가 성공적으로 완료된 경우 콜백 호출
-            self.on_file_uploaded_callback(self.metadata_manager)
-        except Exception as ex:
-            # 오류 발생 시 스낵바를 띄우기
-            print(f"{str(ex)}")
-            self.snackbar_notifier.show_snackbar(f"오류가 발생했습니다: {str(ex)}", error=True)
+            print(f"Processing files: {file_paths}")  # 디버그 프린트 문
+            await self.setup_controller.process_files_async(file_paths)
+        # except Exception as ex:
+        #     # 오류 발생 시 스낵바를 띄웁니다.
+        #     print(f"Error occurred during file processing: {str(ex)}")  # 디버그 프린트 문
+        #     self.snackbar_notifier.show_snackbar(f"오류가 발생했습니다: {str(ex)}", error=True)
         finally:
-            # 파일 업로드 완료 후 모달 닫기
+            # 작업 완료 후 모달 닫기
             self.alert_modal.close()

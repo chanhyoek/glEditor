@@ -1,60 +1,71 @@
 import flet as ft
-from ....components.checkboxes import CheckboxManager
+from ....components.checkboxes_factory import create_checkbox_manager
 from ....components.SearchField import SearchField
+from ....components.selected_items_display import SelectedItemsDisplay
+from controller.columns_controller import ColumnsController
 from model.eventHandler import Event
 from typing import List
 
 class SelectColumnsOption:
-    def __init__(self, page: ft.Page, meta_data: dict, error_handler, window_width):
-        self.page = page
-        self.meta_data = meta_data
-        self.checkboxes = ft.Row(width=window_width, scroll=ft.ScrollMode.AUTO, height=20)
-        self.checkbox_manager = CheckboxManager(page, self.checkboxes, error_handler)
-        self.selected_list_display = ft.Row(width=window_width, scroll=ft.ScrollMode.AUTO, height=20)
-        self.on_selection_change = Event()
+    def __init__(self, page: ft.Page, columns_controller: ColumnsController, error_handler, window_width):
+        try:
+            self.page = page
+            self.columns_controller = columns_controller
+            self.on_selection_change = Event()
+            self.checkboxes = ft.Column(scroll=ft.ScrollMode.AUTO, width=window_width)
 
-        # 검색 및 선택/해제 컴포넌트 설정
-        self.search_component = SearchField(
-            on_search=self.search_and_update,
-            on_select_all=lambda e: self.select_all_columns(),
-            on_unselect_all=lambda e: self.unselect_all_columns(),
-            width=400
-        )
+            # 선택된 항목 표시 컴포넌트 생성
+            self.selected_items_display = SelectedItemsDisplay(
+                width=window_width, height=20, mode='columns', controller=columns_controller
+            )
+
+            # 팩토리 메서드를 통해 적절한 CheckboxManager 생성
+            self.checkbox_manager = create_checkbox_manager(
+                mode='columns',  
+                page=self.page,
+                container=self.checkboxes,
+                error_handler=error_handler,
+                controller=columns_controller
+            )
+
+            # 검색 및 선택/해제 컴포넌트 설정
+            self.search_component = SearchField(
+                on_search=self.search_and_update,
+                on_select_all=lambda e: self.select_all_columns(),
+                on_unselect_all=lambda e: self.unselect_all_columns(),
+                width=400
+            )
+        except Exception as e:
+            print(f"[ERROR] SelectColumnsOption 초기화 중 오류 발생: {e}")
 
     def build(self) -> ft.Container:
         """UI 컴포넌트를 구성하고 반환합니다."""
-        # 설명 텍스트
-        description = ft.Row(
-            controls=[
-                ft.Text("열 선택하기 : 원하는 열만 선택하세요", size=15),
-            ]
-        )
-        # 체크박스 생성
-        self.checkbox_manager.create_checkboxes_for_columns(self.meta_data)
 
-        # 초기 선택된 리스트를 표시
-        self.update_selected_list_display()
-
-        # 체크박스 변경 시 이벤트 핸들러 등록
-        self.checkbox_manager.register_checkbox_event_handlers(self.handle_checkbox_change)
+        self.checkbox_manager.build()
 
         self.main_column = ft.Column(
-                controls=[
-                    description,
-                    self.search_component.build(),
-                    self.selected_list_display,
-                    self.checkboxes
-                ],
-                expand=True,
-            )
-        # UI 구성
-        return ft.Container(
-            content= self.main_column
+            controls=[
+                self.search_component.build(),
+                self.selected_items_display,  
+                self.checkboxes,  
+            ],
+            expand=True,
         )
+
+        self.container = ft.Container(
+            content=self.main_column
+        )
+
+        self.page.add(self.container)
+    
+        self.update_selected_list_display()
+        
+        # UI 구성
+        return self.container
 
     def search_and_update(self, search_term: str) -> None:
         """검색 후 체크박스 선택 상태를 업데이트합니다."""
-        self.checkbox_manager.search_unique_value(search_term)
+        self.columns_controller.search_columns(search_term)
         self.refresh_display_and_emit_change()
 
     def select_all_columns(self) -> None:
@@ -68,29 +79,16 @@ class SelectColumnsOption:
         self.refresh_display_and_emit_change()
 
     def refresh_display_and_emit_change(self) -> None:
-        """선택된 리스트를 업데이트하고 이벤트를 발행합니다."""
+        """페이지를 새로고침합니다"""
         self.update_selected_list_display()
-        self.emit_selection_change()
 
     def update_selected_list_display(self) -> None:
-        """UI에 선택된 항목을 표시합니다."""
-        selected_texts = self.checkbox_manager.get_selected_checkbox_labels_as_text()
-        self.selected_list_display.controls.clear()
-        self.selected_list_display.controls.append(ft.Text("선택한 열 : "))
-        self.selected_list_display.controls.extend(selected_texts)
-        self.page.update()
-
-    def handle_checkbox_change(self, e) -> None:
-        """체크박스 변경 시 선택된 리스트를 업데이트합니다."""
-        self.refresh_display_and_emit_change()
-
-    def emit_selection_change(self) -> None:
-        """선택된 열이 변경되었을 때 이벤트를 발행합니다."""
-        selected_labels = [label for label in self.checkbox_manager.get_selected_checkbox_labels()]
-        self.on_selection_change.emit(selected_labels)  # 이벤트 발행
+        """선택된 체크박스를 표시합니다."""
+        self.selected_items_display.update_display()
 
     def on_resize(self, e):
         """창 크기 변경 시 호출되는 이벤트 핸들러."""
         self.window_width = self.page.window_width
         self.main_column.width = self.window_width
-        self.page.update() 
+        self.selected_items_display.width = self.window_width
+        self.page.update()

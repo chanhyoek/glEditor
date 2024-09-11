@@ -2,10 +2,10 @@ import flet as ft
 import asyncio
 
 class Tabs:
-    def __init__(self, page, meta_data, window_width):
+    def __init__(self, page, metadata_controller, window_width):
         self.page = page
-        self.meta_data = meta_data
-        self.tabs_button = ft.Row(scroll=ft.ScrollMode.ALWAYS,width=window_width)
+        self.metadata_controller = metadata_controller
+        self.tabs_button = ft.Row(scroll=ft.ScrollMode.ALWAYS, width=window_width)
         self.tabs_content = ft.Container()
         self.active_index = 0
         self.window_width = window_width
@@ -15,26 +15,26 @@ class Tabs:
 
     def build(self):
         self.main_column = ft.Column(
-                controls=[
-                    self.tabs_button,
-                    self.tabs_content
-                ],
-                expand=True,
-                spacing=5,
-                scroll=ft.ScrollMode.AUTO,
-                width=self.window_width
-            )
-        
-        return ft.Container (
-            content =  self.main_column,
-            padding= ft.padding.only(left=20,right=30),
-            margin= ft.margin.only(bottom=20)
-        ) 
-       
+            controls=[
+                self.tabs_button,
+                self.tabs_content
+            ],
+            expand=True,
+            spacing=5,
+            scroll=ft.ScrollMode.AUTO,
+            width=self.window_width
+        )
+
+        return ft.Container(
+            content=self.main_column,
+            padding=ft.padding.only(left=20, right=30),
+            margin=ft.margin.only(bottom=20)
+        )
+
     def create_tabs(self):
         """tabs 버튼을 생성합니다."""
-        keys = self.meta_data.get_all_keys()
-        self.tabs_button.controls.clear()  
+        keys = self.metadata_controller.model.metadata.keys()
+        self.tabs_button.controls.clear()
         for index, key in enumerate(keys):
             button = ft.FilledButton(
                 content=ft.Text(key),
@@ -51,13 +51,13 @@ class Tabs:
     def switch_tab(self, index):
         """tab을 전환합니다."""
         self.active_index = index
-        keys = self.meta_data.get_all_keys()
+        keys = list(self.metadata_controller.model.metadata.keys())  # MetadataController를 통해 키를 가져옴
         key = keys[index]
         self.load_data(key)
-    
+
     def load_data(self, key):
         """데이터를 로드하고 UI를 업데이트합니다."""
-        data = self.meta_data.get_first_5_rows(key) # 데이터 로드
+        data = self.metadata_controller.get_first_5_rows(key)  # MetadataController를 통해 데이터 로드
         self.tabs_content.content = self.create_data_table(data)
         self.update_tab_buttons()
         self.tabs_content.update()
@@ -67,21 +67,22 @@ class Tabs:
             button.style.bgcolor = ft.colors.LIGHT_BLUE_50 if idx == self.active_index else None
         if self.tabs_button.page:
             self.tabs_button.update()
-    
+
     def create_data_table(self, df):
+        """DataFrame을 데이터 테이블로 변환합니다."""
         return ft.Row([
-                    ft.DataTable(
-                        columns=[ft.DataColumn(ft.Text(col)) for col in df.columns],
-                        rows=[
-                            ft.DataRow(
-                                cells=[ft.DataCell(ft.Text(str(cell))) for cell in row]
-                            ) for row in df.head(5).values
-                        ]
-                    )
-                ],
-                expand=True,
-                width=self.window_width,
-                scroll=ft.ScrollMode.ALWAYS)
+            ft.DataTable(
+                columns=[ft.DataColumn(ft.Text(col)) for col in df.columns],
+                rows=[
+                    ft.DataRow(
+                        cells=[ft.DataCell(ft.Text(str(cell))) for cell in row]
+                    ) for row in df.head(5).values
+                ]
+            )
+        ],
+            expand=True,
+            width=self.window_width,
+            scroll=ft.ScrollMode.ALWAYS)
 
     def on_resize(self, e):
         """창 크기 변경 시 호출되는 이벤트 핸들러."""

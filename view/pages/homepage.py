@@ -34,7 +34,7 @@ class HomePage:
         return ft.ExpansionPanelList(
             controls=[
                 ft.ExpansionPanel(
-                    header=ft.Text("주의사항", size=16),
+                    header=ft.Container(content=ft.Text("주의사항", size=16), padding=ft.padding.only(left=20, top=12)),
                     content=ft.Column(
                         [
                             ft.Text("1. 편집하고자 하는 엑셀파일의 첫번째 행에 해더가 위치해야 합니다."),

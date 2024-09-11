@@ -4,7 +4,7 @@ from .pages.homepage import HomePage
 from .pages.edit_data_page import EditDataPage
 
 class AppLayout(ft.Row):
-    def __init__(self, app, page, *args, **kwargs):
+    def __init__(self, app, page, task_manager, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.app = app
         self.page = page
@@ -15,13 +15,15 @@ class AppLayout(ft.Row):
             selected_icon=ft.icons.ARROW_CIRCLE_RIGHT, 
             on_click=self.toggle_nav_rail
         )
+        self.task_manager = task_manager
         self.sidebar = NavBar(self, page)
         self.homepage = HomePage(page, self).build()
-        self.editpage = EditDataPage(page, self).build()
+        self.editpage = EditDataPage(page, self, self.task_manager).build()
 
         self._active_view = None
         self.controls = [self.sidebar, self.toggle_nav_rail_button]
         self.expand = True
+        
 
     @property
     def active_view(self):

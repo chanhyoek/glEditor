@@ -2,7 +2,7 @@ import pandas as pd
 import asyncio
 from concurrent.futures import ProcessPoolExecutor
 import os
-from typing import Dict, List, Union
+from typing import Dict, List
 
 class ExcelDataParser:
     def __init__(self):

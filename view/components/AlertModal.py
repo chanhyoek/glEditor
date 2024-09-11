@@ -1,6 +1,6 @@
 import flet as ft
 from typing import List
-from model.task_manager import TaskManager
+from services.task_manager import TaskManager
 from .SnackbarNotifier import SnackbarNotifier
 
 

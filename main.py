@@ -10,7 +10,7 @@ def main(page: ft.Page):
     task_manager = TaskManager()
 
     page.title = "Xcelator"
-    # page.theme_mode = ft.ThemeMode.DARK  # 다크 테마 적용
+    page.theme_mode = ft.ThemeMode.DARK  # 다크 테마 적용
     page.window.icon = ft.icons.SPEED_SHARP
     app = GLEditor(page, task_manager)
     app.build()

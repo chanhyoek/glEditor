@@ -11,12 +11,14 @@ class CheckboxManagerBase(ft.UserControl, ABC):
 
     @abstractmethod
     def create_checkboxes_container(self, key: str, batch_size=10):
-        """체크박스 컨테이너를 생성합니다."""
         pass
 
     @abstractmethod
     def _on_checkbox_change(self, value):
-        """체크박스 값 변경 시 호출되는 콜백 함수입니다."""
+        pass
+
+    @abstractmethod
+    def update_observer(self):
         pass
 
     def select_all_checkboxes(self):
@@ -28,18 +30,24 @@ class CheckboxManagerBase(ft.UserControl, ABC):
         self._set_all_checkboxes_value(False)
 
     def _set_all_checkboxes_value(self, value):
-        """모든 체크박스의 값을 설정합니다."""
-        for checkbox in self.checkboxes:
-            checkbox.value = value
-            self._update_selection_state(checkbox.label, value)
+        """컨테이너 내 모든 체크박스의 값을 설정합니다."""
+        self._recursive_set_checkbox_value(self.container, value)
         self.page.update()
+
+    def _recursive_set_checkbox_value(self, control, value):
+        """재귀적으로 컨트롤을 탐색하며 모든 체크박스의 값을 설정합니다."""
+        if isinstance(control, ft.Checkbox):
+            control.value = value
+            self._update_selection_state(control.label, value)
+
+        if hasattr(control, 'controls') and control.controls:
+            for child in control.controls:
+                self._recursive_set_checkbox_value(child, value)
 
     @abstractmethod
     def _update_selection_state(self, label, value):
-        """선택 상태를 업데이트하는 추상 메서드입니다."""
         pass
 
     def register_checkbox_event_handlers(self, handler):
-        """모든 체크박스에 대해 이벤트 핸들러를 등록합니다."""
         for checkbox in self.checkboxes:
             checkbox.on_change = handler

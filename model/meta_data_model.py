@@ -1,41 +1,68 @@
+
 from typing import Dict, List, Union
 import pandas as pd
 
 class MetadataModel:
     def __init__(self):
-        # 메타데이터 저장을 위한 초기화
+        # Initialize metadata storage
         self.metadata: Dict[str, Dict[str, Union[
             str, 
-            pd.DataFrame, 
-            List[Dict[str, Union[str, bool]]],  # headers: 열 이름과 선택 상태(is_select)만 포함
-            Dict[str, Dict[str, bool]]  # unique_values: 열 이름별 값과 선택 여부 포함
+            pd.DataFrame,
+            bool, 
+            List[str],  # headers: only includes column names
         ]]] = {}
 
     def set_metadata(
         self, 
         key: str, 
-        file_path: str, 
-        headers: List[Dict[str, Union[str, bool]]], 
-        first_5_rows: pd.DataFrame, 
-        unique_values: Dict[str, Dict[str, bool]]
+        file_path: str,
+        is_select: bool, 
+        headers: List[str], 
+        first_5_rows: pd.DataFrame
     ) -> None:
-        """메타데이터 설정"""
+        """Set metadata"""
+
         self.metadata[key] = {
             "file_path": file_path,
+            "is_select": is_select,
             "first_5_rows": first_5_rows,
             "headers": headers,
-            "unique_values": unique_values
         }
 
     def get_metadata(self, key: str) -> Dict[str, Union[
         str, 
         pd.DataFrame, 
-        List[Dict[str, Union[str, bool]]], 
-        Dict[str, Dict[str, bool]]
+        bool,
+        List[str]
     ]]:
-        """지정된 키에 대한 메타데이터 반환"""
+        """Return metadata for the specified key"""
         return self.metadata.get(key, {})
 
+    def update_selected_key(self, key: str, is_select: bool) -> None:
+        """Update the is_select attribute for the specified key"""
+        if key in self.metadata:
+            self.metadata[key]['is_select'] = is_select
+
+    def select_all_keys(self):
+        for key in self.metadata:
+            self.metadata[key]['is_select'] = True
+
+    def unselect_all_keys(self):
+        for key in self.metadata:
+            self.metadata[key]['is_select'] = False
+
+    def get_all_keys_properties(self) -> List[Dict[str, bool]]:
+        """Return all keys and their is_select properties"""
+        all_keys_properties = []
+        for key, meta in self.metadata.items():
+            # 새로운 형식으로 데이터 구조 변경
+            key_property = {'key': key, 'is_select': meta.get('is_select', False)}
+            all_keys_properties.append(key_property)
+        return all_keys_properties
+    
+    def get_selected_keys(self) -> List[str]:
+        return [key for key, data in self.metadata.items() if data.get('is_select', False)]
+
     def reset_metadata(self) -> None:
-        """메타데이터 초기화"""
+        """Reset metadata"""
         self.metadata.clear()

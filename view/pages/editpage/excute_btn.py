@@ -4,9 +4,9 @@ import asyncio
 import flet as ft
 from ...components.AlertModal import AlertModal
 from services.task_manager import TaskManager
-
+from controller.edit_controller import EditController
 class ExcuteBtn:
-    def __init__(self, options, snackbar_notifier ,controller, page, task_manager):
+    def __init__(self, options, snackbar_notifier, controller:EditController, page:ft.Page, task_manager):
         self.page = page 
         self.options = options
         self.controller = controller
@@ -27,8 +27,12 @@ class ExcuteBtn:
                     shape=ft.RoundedRectangleBorder(radius=10),
                 )
             ),
+            width=675,
             padding=20
         )
+
+        self.excute_btn.resizeable = False
+
         return self.excute_btn
 
     def on_create_files_button_click(self, e):
@@ -45,7 +49,8 @@ class ExcuteBtn:
 
         # 파일 생성 작업을 컨트롤러에 요청
         asyncio.run(self.task_manager.run_task(
-            self.controller.create_files(),  
+            self.controller.create_files(self.alert_modal),  
             on_complete=self.alert_modal.close,  # 작업 완료 시 모달 닫기
             on_error=lambda msg: self.snackbar_notifier.show_snackbar(f"오류가 발생했습니다: {msg}", error=True)  # 오류 발생 시 알림
         ))
+

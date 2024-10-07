@@ -27,7 +27,7 @@ class HomePage:
             ),
             width=800,
             height=180,
-            margin=5
+            margin=5,
         )
 
     def create_panel(self):

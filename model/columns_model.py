@@ -6,7 +6,7 @@ class Columns:
         self.column_data: Dict[str, Dict[str, Union[bool, List[Dict[str, Union[str, bool]]]]]] = {}
 
     def initialize_column_data(self, column_name: str, is_all_dup: bool, is_select: bool = False) -> None:
-        """열 데이터를 초기화합니다."""
+        """열 데이터를 초기화합니다."""        
         if column_name not in self.column_data:
             self.column_data[column_name] = {
                 'is_all_dup': is_all_dup,
@@ -20,7 +20,7 @@ class Columns:
 
     def get_selected_columns(self) -> List[str]:
         """선택된 열을 반환합니다."""
-        return [col_name for col_name, data in self.column_data.items() if data.get('is_select', False)]
+        return [col_name for col_name, data in self.column_data.items() if data.get('is_select', True)]
 
     def get_all_columns_properties(self) -> List[Dict[str, Union[str, bool]]]:
         """모든 열의 속성을 반환합니다."""
@@ -28,3 +28,11 @@ class Columns:
 
     def remove_all_data(self):
         self.column_data.clear()
+
+    def select_all_columns(self):
+        for col_name in self.column_data:
+            self.column_data[col_name]['is_select'] = True
+
+    def unselect_all_columns(self):
+        for col_name in self.column_data:
+            self.column_data[col_name]['is_select'] = False

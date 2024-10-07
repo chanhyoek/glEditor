@@ -16,7 +16,7 @@ from services.task_manager import TaskManager
 import os
 
 class SetupView:
-    def __init__(self, page: ft.Page, task_manager:TaskManager ,on_file_uploaded_callback):
+    def __init__(self, page: ft.Page, task_manager: TaskManager, on_file_uploaded_callback, initial_width):
         self.page = page
         self.file_picker = ft.FilePicker(on_result=self.file_picker_result)
 
@@ -34,24 +34,32 @@ class SetupView:
 
         self.metadata_controller = MetadataController(model=self.metadata_model)
         self.columns_controller = ColumnsController(columns=self.columns_model)
-        self.unique_values_controller = UniqueValuesController(unique_values=self.unique_values_model)
+        self.unique_values_controller = UniqueValuesController(column_name=None, unique_values=self.unique_values_model)
 
         self.setup_controller = SetupController(
             metadata_controller=self.metadata_controller,
-            unique_values_controller= self.unique_values_controller,
+            unique_values_controller=self.unique_values_controller,
             columns_controller=self.columns_controller,
             excel_data_parser=self.excel_data_parser,
             on_file_uploaded_callback=self.on_file_uploaded_callback,
             task_manager=self.task_manager
         )
 
+        self.initial_width = initial_width
 
     def build(self):
         """UI를 생성합니다."""
         self.upload_btn = ft.ElevatedButton(
-            "파일 업로드",
-            icon=ft.icons.UPLOAD_FILE,
-            on_click=lambda _: self.file_picker.pick_files(allow_multiple=True, initial_directory=os.path.expanduser("~/Downloads")),
+            content=ft.Container(
+                ft.Row(
+                    controls=[
+                        ft.Icon(name=ft.icons.UPLOAD_FILE),
+                        ft.Text("파일 선택하기(csv,xls,xlsx,xlsb) - 여러개의 파일을 동시에 선택할 수 있습니다(ctrl/shift + click)")
+                    ],
+                    alignment=ft.MainAxisAlignment.CENTER
+                ),
+            ),
+            on_click=self.on_upload_btn_click,
             adaptive=True,
             style=ft.ButtonStyle(
                 color=ft.colors.WHITE,
@@ -60,6 +68,9 @@ class SetupView:
             )
         )
 
+        # 크기 조정 제외 플래그 설정
+        self.upload_btn.resizeable = False
+
         header = ft.Container(
             content=ft.Column(
                 controls=[
@@ -67,10 +78,10 @@ class SetupView:
                     ft.Text("여러 파일, 여러 시트의 데이터를 취합하여 원하는 방식대로 편집합니다.", size=16),
                     ft.Row(
                         controls=[
-                            ft.Text("지원하는 파일양식: csv, xls, xlsx, xlsb"),
-                            self.upload_btn
+                            ft.Container(
+                                content=self.upload_btn
+                            ),
                         ],
-                        spacing=200
                     )
                 ],
                 alignment=ft.MainAxisAlignment.START
@@ -88,7 +99,6 @@ class SetupView:
                 alignment=ft.MainAxisAlignment.START,
             ),
             height=180,
-            width=800,
             expand=0
         )
         return self.view
@@ -103,21 +113,31 @@ class SetupView:
         )
         self.alert_modal.show()
 
+    def on_upload_btn_click(self, e):
+        self.file_picker.pick_files(
+            allow_multiple=True,
+            initial_directory=os.path.expanduser("/~Downloads")
+        )
+        self.create_modal()
+
     async def file_picker_result(self, e):
         """파일 선택 결과를 처리합니다."""
-        self.create_modal()  # 파일 업로드 모달을 표시
+
+        if e.files is None:
+            self.alert_modal.close()
+            self.snackbar_notifier.show_snackbar(f"파일을 하나 이상 선택해주세요", error=True)
+            return
 
         # 파일 경로 목록 생성
         file_paths = [f.path for f in e.files]
 
         # 파일 처리를 비동기적으로 실행
         try:
-            print(f"Processing files: {file_paths}")  # 디버그 프린트 문
-            await self.setup_controller.process_files_async(file_paths)
-        # except Exception as ex:
-        #     # 오류 발생 시 스낵바를 띄웁니다.
-        #     print(f"Error occurred during file processing: {str(ex)}")  # 디버그 프린트 문
-        #     self.snackbar_notifier.show_snackbar(f"오류가 발생했습니다: {str(ex)}", error=True)
+            await self.setup_controller.process_files_async(file_paths, self.alert_modal)
+        except Exception as ex:
+            # 오류 발생 시 스낵바를 띄웁니다.
+            self.snackbar_notifier.show_snackbar(f"오류가 발생했습니다: {str(ex)}", error=True)
         finally:
             # 작업 완료 후 모달 닫기
             self.alert_modal.close()
+    

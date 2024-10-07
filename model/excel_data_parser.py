@@ -2,7 +2,9 @@ import pandas as pd
 import asyncio
 from concurrent.futures import ProcessPoolExecutor
 import os
+import chardet
 from typing import Dict, List
+
 
 class ExcelDataParser:
     def __init__(self):
@@ -43,7 +45,8 @@ class ExcelDataParser:
     def read_small_file(self, file_path: str) -> Dict[str, pd.DataFrame]:
         """작은 파일을 동기적으로 읽어 처리합니다."""
         if file_path.lower().endswith('.csv'):
-            df = pd.read_csv(file_path)
+            encoding = self.detect_encoding(file_path)
+            df = pd.read_csv(file_path, encoding=encoding)
             return {os.path.splitext(os.path.basename(file_path))[0]: df}
         else:
             sheets = pd.read_excel(file_path, sheet_name=None)
@@ -55,10 +58,33 @@ class ExcelDataParser:
         engine = {'xls': 'xlrd', 'xlsb': 'pyxlsb'}.get(file_extension, 'openpyxl')
         return pd.read_excel(file_path, sheet_name=None, engine=engine)
 
+    @staticmethod
+    def detect_encoding(file_path: str) -> str:
+        """파일의 인코딩 방식을 감지하여 반환합니다."""
+        with open(file_path, 'rb') as f:
+            result = chardet.detect(f.read(10000)) 
+            encoding = result['encoding']
+            return encoding
+
     def read_csv_file(self, file_path: str) -> pd.DataFrame:
-        """CSV 파일을 동기적으로 읽어들이는 함수입니다."""
-        chunks = pd.read_csv(file_path, chunksize=10000)
-        return pd.concat(chunks, ignore_index=True)
+        """CSV 파일을 동기적으로 읽어들이는 함수 (인코딩 자동 감지 포함)."""
+        try:
+            encoding = self.detect_encoding(file_path)
+            chunks = pd.read_csv(file_path, chunksize=10000, encoding=encoding)
+            df = pd.concat(chunks, ignore_index=True)
+            return df
+        except UnicodeDecodeError:
+            print(f"디코딩 오류 발생: {file_path}, 인코딩: {encoding}")
+            return pd.DataFrame()
+        except pd.errors.EmptyDataError:
+            print(f"{file_path}에 데이터가 없습니다.")
+            return pd.DataFrame() 
+        except pd.errors.ParserError as e:
+            print(f"{file_path}에서 구문 분석 오류 발생: {e}")
+            return pd.DataFrame() 
+        except Exception as e:
+            print(f"CSV 파일 {file_path} 읽기 중 오류 발생: {e}")
+            return pd.DataFrame()
 
     def create_single_file(self, df: pd.DataFrame, output_path: str) -> None:
         """단일 시트로 구성된 하나의 파일을 만듭니다."""
@@ -101,4 +127,3 @@ class ExcelDataParser:
                 split_df = merged_df.iloc[start_row:end_row]
                 sheet_name = f"sheet{i + 1}"
                 split_df.to_excel(writer, sheet_name=sheet_name, index=False)
-

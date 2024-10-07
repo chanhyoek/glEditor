@@ -10,8 +10,8 @@ def main(page: ft.Page):
     task_manager = TaskManager()
 
     page.title = "Xcelator"
-    page.theme_mode = ft.ThemeMode.DARK  # 다크 테마 적용
     page.window.icon = ft.icons.SPEED_SHARP
+    page.theme_mode = ft.ThemeMode.DARK  # 기본값을 라이트 모드로 설정
     app = GLEditor(page, task_manager)
     app.build()
     app.initialize()
@@ -19,5 +19,3 @@ def main(page: ft.Page):
 if __name__ == "__main__":
     print("Executing as the main script")
     ft.app(target=main)
-
-        

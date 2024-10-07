@@ -5,6 +5,7 @@ class NavBar(ft.UserControl):
         super().__init__()
         self.app_layout = app_layout
         self.page = page
+        self.is_dark_mode = True  # 초기 테마 상태 설정
         self.top_nav_items = [
             ft.NavigationRailDestination(
                 label_content=ft.Text("HOME", color=ft.colors.LIGHT_BLUE_100),
@@ -18,12 +19,6 @@ class NavBar(ft.UserControl):
                 icon=ft.icons.CALL_MERGE_ROUNDED,
                 selected_icon=ft.icons.CALL_MERGE_ROUNDED
             ),
-            # ft.NavigationRailDestination(
-            #     label_content=ft.Text("추출하기"),
-            #     label="extract",
-            #     icon=ft.icons.CALL_SPLIT_ROUNDED,
-            #     selected_icon=ft.icons.CALL_SPLIT_ROUNDED
-            # ),
         ]
         self.nav_rail = ft.NavigationRail(
             selected_index=None,
@@ -34,24 +29,35 @@ class NavBar(ft.UserControl):
             expand=True,
             extended=True
         )
-        
+
+        # 테마 모드용 토글 스위치
+        self.theme_toggle = ft.Switch(
+            value=True,  # 기본값은 DArk모드
+            on_change=self.toggle_theme_mode
+        )
+
     def build(self):
         self.view = ft.Container(
             content=ft.Column([
                 ft.Row(
                     [
                         ft.Text("XCELATOR", size=30, weight="bold"),
-                        ft.Icon(name=ft.icons.SPEED_SHARP, color = "White", size = 32),
+                        ft.Icon(name=ft.icons.SPEED_SHARP, color="White", size=32),
                     ],
                     vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                    alignment= ft.MainAxisAlignment.CENTER
+                    alignment=ft.MainAxisAlignment.CENTER
                 ),
                 ft.Row(
                     [
-                    ft.Text("Xcelator로 업무를 쉽고 빠르게")
+                        ft.Text("Xcelator로 업무를 쉽고 빠르게")
                     ],
                     vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                    alignment= ft.MainAxisAlignment.CENTER),
+                    alignment=ft.MainAxisAlignment.CENTER
+                ),
+                ft.Row(
+                    controls=[self.theme_toggle],  # 토글 스위치를 추가
+                    alignment=ft.MainAxisAlignment.CENTER
+                ),
                 ft.Container(
                     bgcolor=ft.colors.WHITE54,
                     border_radius=ft.border_radius.all(30),
@@ -59,12 +65,12 @@ class NavBar(ft.UserControl):
                     width=220,
                     height=1
                 ),
-                ft.Row([self.nav_rail], height=300, expand=1),  # 여기서 expand를 1로 설정
+                ft.Row([self.nav_rail], height=300, expand=1),
                 ft.Row(
                     controls=[ft.Text("Developed by Tax Core DA | Ver 1.1.0", size=9)],
                     alignment=ft.MainAxisAlignment.END,
                     vertical_alignment=ft.CrossAxisAlignment.END,
-                    expand=0  # 이 행의 비율을 작게 설정
+                    expand=0
                 )
             ],
             spacing=20),
@@ -74,7 +80,7 @@ class NavBar(ft.UserControl):
             expand=True,
         )
         return self.view
-    
+
     def nav_change(self, e):
         index = e.control.selected_index
         self.nav_rail.selected_index = index
@@ -84,7 +90,10 @@ class NavBar(ft.UserControl):
         elif index == 1:
             self.page.route = "/merge"
             self.app_layout.set_editpage_view()
-        # elif index == 2:
-        #     self.page.route = "/extract"
-        #     self.app_layout.set_extractpage_view()
+        self.page.update()
+
+    def toggle_theme_mode(self, e):
+        # 테마 모드 변경
+        self.is_dark_mode = e.control.value
+        self.page.theme_mode = ft.ThemeMode.DARK if self.is_dark_mode else ft.ThemeMode.LIGHT
         self.page.update()

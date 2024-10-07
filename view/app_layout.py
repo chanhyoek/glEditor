@@ -21,7 +21,9 @@ class AppLayout(ft.Row):
         self.editpage = EditDataPage(page, self, self.task_manager).build()
 
         self._active_view = None
-        self.controls = [self.sidebar, self.toggle_nav_rail_button]
+        self.controls = [self.sidebar, 
+                         self.toggle_nav_rail_button
+                         ]
         self.expand = True
         
 

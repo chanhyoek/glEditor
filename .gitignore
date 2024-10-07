@@ -6,3 +6,6 @@ dist/
 makin_exe.txt
 .pylintrc
 .code_report
+*.log
+*.csv
+makeExe.txt

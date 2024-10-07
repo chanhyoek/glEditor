@@ -24,12 +24,6 @@ class DataManipulator:
         return list(common_headers)
 
     def initialize_data(self, file_data: Dict[str, pd.DataFrame]) -> None:
-        """
-        파일 데이터를 초기화합니다.
-        - 모든 데이터프레임에 "원본파일명" 열을 추가하고, 공통되지 않은 열은 NaN으로 채웁니다.
-        - 모든 데이터를 병합하여 all_set_data로 저장합니다.
-        - 병합된 데이터에서 헤더를 추출하여 all_header로 저장합니다.
-        """
         # 공통 헤더 추출
         common_headers = self.get_common_headers(file_data)
         

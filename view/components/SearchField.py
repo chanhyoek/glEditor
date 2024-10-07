@@ -1,13 +1,13 @@
 import flet as ft
 
 class SearchField:
-    def __init__(self, on_search, on_select_all=None, on_unselect_all=None, width=600):
+    def __init__(self, on_search, on_select_all=None, on_unselect_all=None, width=700):
         self.on_search = on_search
         self.on_select_all = on_select_all
         self.on_unselect_all = on_unselect_all
         self.search_field = ft.TextField(hint_text="Search...", width=width, on_submit=self._handle_search)
 
-    def build(self):
+    def build(self) -> ft.Row:
         controls = [
             self.search_field,
             ft.CupertinoButton(content=ft.Text("Search"), on_click=self._handle_search)

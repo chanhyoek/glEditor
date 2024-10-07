@@ -1,9 +1,6 @@
 # -*- mode: python ; coding: utf-8 -*-
 
 
-block_cipher = None
-
-
 a = Analysis(
     ['main.py'],
     pathex=[],
@@ -13,25 +10,22 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
-    win_no_prefer_redirects=False,
-    win_private_assemblies=False,
-    cipher=block_cipher,
+    excludes=['cookiecutter', 'arrow', 'markdown_it_py', 'mdurl', 'oauthlib', 'pypng', 'qrcode', 'rich', 'Pygments', 'watchdog', 'watchfiles', 'requests', 'urllib3', 'certifi', 'charset_normalizer', 'idna', 'fastapi', 'starlette', 'uvicorn', 'h11', 'httptools', 'websockets'],
     noarchive=False,
+    optimize=0,
 )
-pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+pyz = PYZ(a.pure)
 
 exe = EXE(
     pyz,
     a.scripts,
     a.binaries,
-    a.zipfiles,
     a.datas,
     [],
     name='main',
     debug=False,
     bootloader_ignore_signals=False,
-    strip=False,
+    strip=True,
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
